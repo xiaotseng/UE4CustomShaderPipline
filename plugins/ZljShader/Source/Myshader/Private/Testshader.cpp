@@ -184,6 +184,7 @@ static void DrawTestShaderRenderTarget_RenderThread(
 	};
 	//DrawPrimitiveUP(RHICmdList, PT_TriangleStrip, 2, Vertices, sizeof(Vertices[0]));  
 	//绘制指令
+	
 	DrawIndexedPrimitiveUP(
 		RHICmdList,
 		PT_TriangleList,
