@@ -24,19 +24,45 @@
 
 
 #define LOCTEXT_NAMESPACE "MyShader"  
-
-
+/////////////////////////////////////////顶点数据结构
+struct FMyTextureVertex
+{
+	FVector4 Position;
+	FVector2D UV;
+};
+//////////////////////////////////////////渲染资源类，设计Shader顶点的布局
+class FMyTextureVertexDeclaration :public FRenderResource
+{
+public:
+	FVertexDeclarationRHIRef VertexDeclarationRHI;
+	virtual void InitRHI() override
+	{
+		FVertexDeclarationElementList Elements;
+		uint32 Stride = sizeof(FMyTextureVertex);
+		Elements.Add(FVertexElement(0, STRUCT_OFFSET(FMyTextureVertex, Position), VET_Float4, 0, Stride));
+		Elements.Add(FVertexElement(0, STRUCT_OFFSET(FMyTextureVertex, UV), VET_Float2, 1, Stride));
+		VertexDeclarationRHI = RHICreateVertexDeclaration(Elements);//创建顶点布局
+	}
+	virtual void ReleaseRHI() override
+	{
+		VertexDeclarationRHI->Release();
+	}
+};
+/////////////////////////////////////////////////////////
+//Shader类
 class FMyShaderTest : public FGlobalShader
 {
 public:
 
 	FMyShaderTest() {}
-
+	
 	FMyShaderTest(const ShaderMetaType::CompiledShaderInitializerType& Initializer)
 		: FGlobalShader(Initializer)
 	{
 		//绑定参数到shader
 		SimpleColorVal.Bind(Initializer.ParameterMap, TEXT("SimpleColor"));
+		TestTextureVal.Bind(Initializer.ParameterMap, TEXT("MyTexture"));
+		TestTextureSampler.Bind(Initializer.ParameterMap, TEXT("MyTextureSampler"));
 	}
 
 	static bool ShouldCache(EShaderPlatform Platform)
@@ -61,11 +87,19 @@ public:
 	//自定义函数用于设置参数
 	void SetParameters(
 		FRHICommandListImmediate& RHICmdList,
-		const FLinearColor &MyColor
+		const FLinearColor &MyColor,
+		FTextureRHIParamRef &MyTexture
 	)
 	{
-
+		GetGlobalShaderMap()
 		SetShaderValue(RHICmdList, GetPixelShader(), SimpleColorVal, MyColor);
+		SetTextureParameter(
+			RHICmdList, 
+			GetPixelShader(), 
+			TestTextureVal, 
+			TestTextureSampler, 
+			TStaticSamplerState<SF_Trilinear, AM_Clamp, AM_Clamp, AM_Clamp>::GetRHI(),
+			MyTexture);
 	}
 
 	virtual bool Serialize(FArchive& Ar) override
@@ -79,6 +113,8 @@ public:
 private:
 
 	FShaderParameter SimpleColorVal;
+	FShaderResourceParameter TestTextureVal;
+	FShaderResourceParameter TestTextureSampler;
 
 };
 
@@ -115,13 +151,18 @@ public:
 //实现shader
 IMPLEMENT_SHADER_TYPE(, FShaderTestVS, TEXT("/Plugin/ZljShader/Private/MyShader.usf"), TEXT("MainVS"), SF_Vertex)
 IMPLEMENT_SHADER_TYPE(, FShaderTestPS, TEXT("/Plugin/ZljShader/Private/MyShader.usf"), TEXT("MainPS"), SF_Pixel)
+
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //自定义的绘制
 static void DrawTestShaderRenderTarget_RenderThread(
 	FRHICommandListImmediate& RHICmdList,//指令列表
 	FTextureRenderTargetResource* OutputRenderTargetResource,//用于容纳渲染结果数据
 	ERHIFeatureLevel::Type FeatureLevel,//图形API特性：是一个枚举ES2、ES3_1、SM4、SM5
 	FName TextureRenderTargetName,
-	FLinearColor MyColor
+	FLinearColor MyColor,
+	FTextureRHIParamRef MyTexture
 )
 {
 	//是否渲染线程在调用
@@ -153,9 +194,13 @@ static void DrawTestShaderRenderTarget_RenderThread(
 	TShaderMapRef<FShaderTestVS> VertexShader(GlobalShaderMap);//初始FShaderTestVS着色器到集合
 	TShaderMapRef<FShaderTestPS> PixelShader(GlobalShaderMap);//初始FShaderTestPS着色器到集合
 
+	//顶点布局
+	FMyTextureVertexDeclaration VertexDec;
+	VertexDec.InitRHI();
+
 	// Set the graphic pipeline state.  设置渲染管线的状态,渲染参数都在这里了
 	FGraphicsPipelineStateInitializer GraphicsPSOInit;
-	RHICmdList.ApplyCachedRenderTargets(GraphicsPSOInit);//应用管线状态
+	RHICmdList.ApplyCachedRenderTargets(GraphicsPSOInit);//好像是对GraphicsPSOInit应用一些默认设置
 	GraphicsPSOInit.DepthStencilState = TStaticDepthStencilState<false, CF_Always>::GetRHI();
 	GraphicsPSOInit.BlendState = TStaticBlendState<>::GetRHI();
 	GraphicsPSOInit.RasterizerState = TStaticRasterizerState<>::GetRHI();
@@ -163,28 +208,33 @@ static void DrawTestShaderRenderTarget_RenderThread(
 	GraphicsPSOInit.BoundShaderState.VertexDeclarationRHI = GetVertexDeclarationFVector4();
 	GraphicsPSOInit.BoundShaderState.VertexShaderRHI = GETSAFERHISHADER_VERTEX(*VertexShader);//设置渲染管线的顶点着色器
 	GraphicsPSOInit.BoundShaderState.PixelShaderRHI = GETSAFERHISHADER_PIXEL(*PixelShader);//设置渲染管线的片断着色器
-	SetGraphicsPipelineState(RHICmdList, GraphicsPSOInit);
+	GraphicsPSOInit.BoundShaderState.VertexDeclarationRHI = VertexDec.VertexDeclarationRHI;//设置顶点布局
+	SetGraphicsPipelineState(RHICmdList, GraphicsPSOInit);//设置启用这些状态
 
 	//RHICmdList.SetViewport(0, 0, 0.0f, DrawTargetResolution.X, DrawTargetResolution.Y, 1.0f);  
-	PixelShader->SetParameters(RHICmdList, MyColor);
+	PixelShader->SetParameters(RHICmdList, MyColor, MyTexture);
 
 	// Draw grid.  
 	//uint32 PrimitiveCount = 2;  
 	//RHICmdList.DrawPrimitive(PT_TriangleList, 0, PrimitiveCount, 1);  //准备要传到shader的值
 	//顶点
-	FVector4 Vertices[4];
-	Vertices[0].Set(-1.0f, 1.0f, 0, 1.0f);
-	Vertices[1].Set(1.0f, 1.0f, 0, 1.0f);
-	Vertices[2].Set(-1.0f, -1.0f, 0, 1.0f);
-	Vertices[3].Set(1.0f, -1.0f, 0, 1.0f);
+	FMyTextureVertex Vertices[4];
+	Vertices[0].Position.Set(-1.0f, 1.0f, 0, 1.0f);
+	Vertices[1].Position.Set(1.0f, 1.0f, 0, 1.0f);
+	Vertices[2].Position.Set(-1.0f, -1.0f, 0, 1.0f);
+	Vertices[3].Position.Set(1.0f, -1.0f, 0, 1.0f);
+	Vertices[0].UV = FVector2D(0.0f, 1.0f);
+	Vertices[1].UV = FVector2D(1.0f, 1.0f);
+	Vertices[2].UV = FVector2D(0.0f, 0.0f);
+	Vertices[3].UV = FVector2D(1.0f, 0.0f);
 	static const uint16 Indices[6] =
 	{
 		0, 1, 2,
 		2, 1, 3
 	};
-	//DrawPrimitiveUP(RHICmdList, PT_TriangleStrip, 2, Vertices, sizeof(Vertices[0]));  
-	//绘制指令
 	
+	//绘制指令
+	//DrawPrimitiveUP(RHICmdList, PT_TriangleStrip, 2, Vertices, sizeof(Vertices[0]));  
 	DrawIndexedPrimitiveUP(
 		RHICmdList,
 		PT_TriangleList,
@@ -205,32 +255,39 @@ static void DrawTestShaderRenderTarget_RenderThread(
 }
 
 //蓝图的构造函数
+
 UTestShaderBlueprintLibrary::UTestShaderBlueprintLibrary(const FObjectInitializer& ObjectInitializer) :Super(ObjectInitializer) {
 
 }
+
+
+
+
 //蓝图调用的绘制函数
 void UTestShaderBlueprintLibrary::DrawTestShaderRenderTarget(
-	UTextureRenderTarget2D* OutputRenderTarget,//
+	class UTextureRenderTarget2D* OutputRenderTarget,
 	AActor* Ac,
-	FLinearColor MyColor
+	FLinearColor MyColor,
+	UTexture* MyTexture
 )
 {
+	MyTexture->TextureReference.TextureReferenceRHI;
 	check(IsInGameThread());
 
 	if (!OutputRenderTarget)
 	{
 		return;
 	}
-
+	FTextureRHIParamRef MyTextureRHI= MyTexture->TextureReference.TextureReferenceRHI;
 	FTextureRenderTargetResource* TextureRenderTargetResource = OutputRenderTarget->GameThread_GetRenderTargetResource();
 	UWorld* World = Ac->GetWorld();
 	ERHIFeatureLevel::Type FeatureLevel = World->Scene->GetFeatureLevel();
 	FName TextureRenderTargetName = OutputRenderTarget->GetFName();
 	//添加渲染指令
 	ENQUEUE_RENDER_COMMAND(CaptureCommand)(
-		[TextureRenderTargetResource, FeatureLevel, MyColor, TextureRenderTargetName](FRHICommandListImmediate& RHICmdList)
+		[TextureRenderTargetResource, FeatureLevel, MyColor, TextureRenderTargetName, MyTextureRHI](FRHICommandListImmediate& RHICmdList)
 	{
-		DrawTestShaderRenderTarget_RenderThread(RHICmdList, TextureRenderTargetResource, FeatureLevel, TextureRenderTargetName, MyColor);
+		DrawTestShaderRenderTarget_RenderThread(RHICmdList, TextureRenderTargetResource, FeatureLevel, TextureRenderTargetName, MyColor, MyTextureRHI);
 	}
 	);
 
