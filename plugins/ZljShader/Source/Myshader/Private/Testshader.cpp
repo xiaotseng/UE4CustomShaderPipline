@@ -91,7 +91,6 @@ public:
 		FTextureRHIParamRef &MyTexture
 	)
 	{
-		GetGlobalShaderMap()
 		SetShaderValue(RHICmdList, GetPixelShader(), SimpleColorVal, MyColor);
 		SetTextureParameter(
 			RHICmdList, 
