@@ -1,0 +1,28 @@
+#include "/Engine/Public/Platform.ush"
+struct a2f
+{//程序到顶点着色器
+    float4 InPosition : ATRRIBUTE0;
+    float2 InUV0 : ATRRIBUTE1;
+    float2 InUV1 : ATRRIBUTE2;
+};
+struct v2f
+{//顶点着色器到片断着色器
+    float4 Position : SV_POSITION;
+    float2 UV : TEXCOORD0;
+    float4 WorldPosition : TEXCOORD1;
+};
+//顶点色色器入口
+void MainVS(
+    in a2f i,
+    out v2f o
+)
+{
+    o.Position = float4(i.InUV1, 1.0, 1.0);
+    o.UV = i.InUV0;
+    o.WorldPosition = i.InPosition;
+}
+//片断着色器
+float4 MainPS(in v2f i):SV_Target
+{
+    return i.WorldPosition;
+}
