@@ -21,7 +21,7 @@ public:
 																					FShaderCompilerEnvironment& OutEnvironment);//修改编译环境
 };
 //顶点着色器Shader类
-class FBakeShaderVS :FBakeShader
+class FBakeShaderVS :public FBakeShader
 {
 	DECLARE_SHADER_TYPE(FBakeShaderVS, Global)
 public:
@@ -30,7 +30,7 @@ public:
 	}
 };
 //像素着色器Shader类
-class FBakeShaderPS :FBakeShader
+class FBakeShaderPS :public FBakeShader
 {
 	DECLARE_SHADER_TYPE(FBakeShaderPS, Global)
 public:

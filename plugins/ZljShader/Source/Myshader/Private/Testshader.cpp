@@ -167,6 +167,7 @@ static void DrawTestShaderRenderTarget_RenderThread(
 	//是否渲染线程在调用
 	check(IsInRenderingThread());
 
+
 #if WANTS_DRAW_MESH_EVENTS  
 	FString EventName;
 	TextureRenderTargetName.ToString(EventName);
@@ -193,6 +194,7 @@ static void DrawTestShaderRenderTarget_RenderThread(
 	TShaderMapRef<FShaderTestVS> VertexShader(GlobalShaderMap);//初始FShaderTestVS着色器到集合
 	TShaderMapRef<FShaderTestPS> PixelShader(GlobalShaderMap);//初始FShaderTestPS着色器到集合
 
+
 	//顶点布局
 	FMyTextureVertexDeclaration VertexDec;
 	VertexDec.InitRHI();
@@ -204,6 +206,7 @@ static void DrawTestShaderRenderTarget_RenderThread(
 	GraphicsPSOInit.BlendState = TStaticBlendState<>::GetRHI();
 	GraphicsPSOInit.RasterizerState = TStaticRasterizerState<>::GetRHI();
 	GraphicsPSOInit.PrimitiveType = PT_TriangleList;
+	
 	GraphicsPSOInit.BoundShaderState.VertexDeclarationRHI = GetVertexDeclarationFVector4();
 	GraphicsPSOInit.BoundShaderState.VertexShaderRHI = GETSAFERHISHADER_VERTEX(*VertexShader);//设置渲染管线的顶点着色器
 	GraphicsPSOInit.BoundShaderState.PixelShaderRHI = GETSAFERHISHADER_PIXEL(*PixelShader);//设置渲染管线的片断着色器

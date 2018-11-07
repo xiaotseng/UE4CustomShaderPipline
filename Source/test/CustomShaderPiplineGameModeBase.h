@@ -5,13 +5,13 @@
 #include "CoreMinimal.h"
 #include"UObject/ObjectMacros.h"
 #include "GameFramework/GameModeBase.h"
-#include "testGameModeBase.generated.h"
+#include "CustomShaderPiplineGameModeBase.generated.h"
 
 /**
  * 
  */
 UCLASS()
-class TEST_API AtestGameModeBase : public AGameModeBase
+class CUSTOMSHADERPIPLINE_API ACustomShaderPiplineGameModeBase : public AGameModeBase
 {
 	GENERATED_BODY()
 	

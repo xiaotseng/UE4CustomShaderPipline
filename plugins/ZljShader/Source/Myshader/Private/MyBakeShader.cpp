@@ -29,14 +29,16 @@ IMPLEMENT_SHADER_TYPE(, FBakeShaderPS, TEXT("/Plugin/ZljShader/Private/MyBakeSha
 
 //实现渲染资源
 
+
+
+
 void FVertexLayoutBake::InitRHI()
 {
 	FVertexDeclarationElementList ElementList;
-	ElementList.Add(FVertexElement(0,0,VET_Float4,0,24));
+	ElementList.Add(FVertexElement(0, 0, VET_Float4, 0, 24));
 	ElementList.Add(FVertexElement(0, 16, VET_Float2, 1, 24));
 	VertexDeclarationRHI = RHICreateVertexDeclaration(ElementList);
 }
-
 
 void FVertexLayoutBake::ReleaseRHI()
 {

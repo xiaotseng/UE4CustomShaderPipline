@@ -2,9 +2,9 @@
 
 using UnrealBuildTool;
 
-public class test : ModuleRules
+public class CustomShaderPipline : ModuleRules
 {
-	public test(ReadOnlyTargetRules Target) : base(Target)
+	public CustomShaderPipline(ReadOnlyTargetRules Target) : base(Target)
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	

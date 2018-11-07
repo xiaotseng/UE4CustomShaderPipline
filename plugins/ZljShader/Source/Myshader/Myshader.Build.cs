@@ -47,7 +47,9 @@ public class Myshader : ModuleRules
 				"Engine",
 				"Slate",
 				"SlateCore",
-                "InputCore"
+                "InputCore",
+                "ShaderCore",
+                "RHI"
 
 				// ... add private dependencies that you statically link with here ...	
 			}

@@ -4,10 +4,10 @@
 	"Category": "",
 	"Description": "",
 	"Modules": [
-		{
-			"Name": "test",
-			"Type": "Runtime",
-			"LoadingPhase": "Default"
-		}
+    {
+      "Name": "CustomShaderPipline",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
 	]
 }
