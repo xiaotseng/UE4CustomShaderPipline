@@ -20,7 +20,7 @@ void MainPS(
         )
 {
     OutColor = float4(MyTexture.Sample(MyTextureSampler, InUV.xy).xyz, 1.0f);
-    //OutColor = SimpleColor;
+   // OutColor = SimpleColor;
     //OutColor = float4(1.0,1.0,1.0,1.0);
 
 }

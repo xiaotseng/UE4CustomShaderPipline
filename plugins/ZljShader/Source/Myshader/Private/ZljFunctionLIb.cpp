@@ -12,29 +12,54 @@
 #include "Public/Internationalization/Internationalization.h"  
 #include "Public/StaticBoundShaderState.h" 
 #include "Engine.h"
+#include <iostream>
 
 #include "MyBakeShader.h"//着色器
 
-
 //绘制函数
 static void Draw_ThreadFunction
-	(
-		FRHICommandListImmediate& RHICmdList,
-		UTextureRenderTarget2D * OutRenderTarget,
-		ERHIFeatureLevel::Type FeatureLevel,
-		const FStaticMeshLODResources &MehshSource//几何信息
+(
+	FRHICommandListImmediate& RHICmdList,
+	FTextureRenderTargetResource* OutputRenderTargetResource,
+	ERHIFeatureLevel::Type FeatureLevel,
+	UStaticMesh * ToBakMesh
 	)
+
 {
 	check(IsInRenderingThread());//检查是不是渲染线程在调用这个函数
 	//////
+	const FStaticMeshLODResources &MehshSource= ToBakMesh->GetLODForExport(0);//几何信息
 	const FStaticMeshVertexBuffers &MeshBuffers=MehshSource.VertexBuffers;//顶点buffers
-	FStaticMeshVertexBuffer fee;
+	TArray<uint32> indices;
+	MehshSource.IndexBuffer.GetCopy(indices);
+	uint32 verCount = MehshSource.GetNumVertices();
+	TArray< ZLJ::MyVertex> vertices;
+	vertices.SetNum(verCount);
+	for (uint32 i = 0; i < verCount; i++)
+	{
+		vertices[i].Position = MehshSource.VertexBuffers.PositionVertexBuffer.VertexPosition(i);
+		//vertices[i].VertexColor = MehshSource.VertexBuffers.ColorVertexBuffer.VertexColor(i);
+		vertices[i].Uv1 = MehshSource.VertexBuffers.StaticMeshVertexBuffer.GetVertexUV(i, 0);
+		vertices[i].Uv2 = MehshSource.VertexBuffers.StaticMeshVertexBuffer.GetVertexUV(i, 1);
+	}
+	///////////////
+	uint32 vertCount = vertices.Num();
+	uint32 primitCount = indices.Num()/3;
+	void* pIBO = indices.GetData();
+	uint32 IBO_Size = indices.GetTypeSize();
+	void* pVBO = vertices.GetData();
+	uint32 VBO_Size = vertices.GetTypeSize();
+	/////////////////
+	FTextureRHIRef zRHI;
 	//准备绘制
-	const FTextureRHIRef renderTarget = OutRenderTarget->GameThread_GetRenderTargetResource()->GetRenderTargetTexture();
-	SetRenderTarget(//设置渲染到什么地方
-		RHICmdList,//渲染指令
-		renderTarget,//存话渲染数据的位置
-		FTextureRHIRef()//zPass
+	FTextureRHIRef renderTarget = OutputRenderTargetResource->GetRenderTargetTexture();
+	SetRenderTarget(//指定输出到哪里
+		RHICmdList,
+		renderTarget,
+		zRHI,
+		ESimpleRenderTargetMode::EUninitializedColorAndDepth,
+		FExclusiveDepthStencil::DepthNop_StencilNop
+
 	);
 
 	///////////////////////////////
@@ -43,7 +68,7 @@ static void Draw_ThreadFunction
 	TShaderMapRef<FBakeShaderVS> VertexShader(GlobalShaderMap);//初始FShaderTestVS着色器到集合
 	TShaderMapRef<FBakeShaderPS> PixelShader(GlobalShaderMap);//初始FShaderTestPS着色器到集合
 	/////////////////////
-	FVertexLayoutBake VertexDec;//顶点布局
+	FVertexLayoutBake VertexDec;//维护一个顶点布局
 	VertexDec.InitRHI();
 	//管线状态初始化对像
 	FGraphicsPipelineStateInitializer GraphicsPSOInit;
@@ -57,13 +82,25 @@ static void Draw_ThreadFunction
 	GraphicsPSOInit.BoundShaderState.VertexDeclarationRHI = VertexDec.VertexDeclarationRHI;//设置顶点布局
 	SetGraphicsPipelineState(RHICmdList,GraphicsPSOInit);
 	//调用绘制基础图元
-	//DrawIndexedPrimitiveUP(RHICmdList,PT_TriangleList,0,4,6)；
+	
+	
+	DrawIndexedPrimitiveUP(
+		RHICmdList,
+		PT_TriangleList,
+		0, 
+		vertCount,//顶点数
+		primitCount,//画几个图元
+		pIBO,//IBO
+		IBO_Size,//单个IBO大小
+		pVBO, //VBO
+		VBO_Size//单个VBO大小
+	);
 	//拷贝数据到传入的渲染目标
-	RHICmdList.CopyToResolveTarget(renderTarget, OutRenderTarget->TextureReference.TextureReferenceRHI, FResolveParams());
+	RHICmdList.CopyToResolveTarget(OutputRenderTargetResource->GetRenderTargetTexture(), OutputRenderTargetResource->TextureRHI, FResolveParams());
+	
 }
 
-//这个构造实现不能少否则链接报错
-UZljFunctionLIb::UZljFunctionLIb(const FObjectInitializer& ObjectInitializer):Super(ObjectInitializer){}
+
 
 /////蓝图调用的函数
 void UZljFunctionLIb::bake(UStaticMesh * ToBakMesh, UTextureRenderTarget2D * OutRenderTarget, AActor* ac)
@@ -72,11 +109,9 @@ void UZljFunctionLIb::bake(UStaticMesh * ToBakMesh, UTextureRenderTarget2D * Out
 	TMap<FVector, FColor> vertextColor;
 	ToBakMesh->GetVertexColorData(vertextColor);
 	ToBakMesh->GetLODForExport(0).VertexBuffers.PositionVertexBuffer.VertexBufferRHI;
-	uint32 n= vertextColor.GetAllocatedSize();
-	GEngine->AddOnScreenDebugMessage(0, 1, FColor::Cyan, FString::FromInt(n), true);
-	
-	
+	FTextureRHIParamRef MyTextureRHI= OutRenderTarget->TextureReference.TextureReferenceRHI;
 	 const FStaticMeshLODResources &MehshSource=ToBakMesh->GetLODForExport(0);
+	 FTextureRenderTargetResource* TextureRenderTargetResource = OutRenderTarget->GameThread_GetRenderTargetResource();
 	 const FColorVertexBuffer &colorBuf=MehshSource.VertexBuffers.ColorVertexBuffer;
 	 FString name=MehshSource.VertexBuffers.PositionVertexBuffer.GetFriendlyName();
 	 ERHIFeatureLevel::Type FeatureLevel=ac->GetWorld()->Scene->GetFeatureLevel();
@@ -85,14 +120,11 @@ void UZljFunctionLIb::bake(UStaticMesh * ToBakMesh, UTextureRenderTarget2D * Out
 		 GEngine->AddOnScreenDebugMessage(0, 1, FColor::Blue, name, true);
 	 }
 
-
 	 ENQUEUE_RENDER_COMMAND(CaptureCommand)
-		 (
-		 [OutRenderTarget, FeatureLevel,&MehshSource](FRHICommandListImmediate& RHICmdList)
+		 (//传入一个lambda
+		 [TextureRenderTargetResource, FeatureLevel, ToBakMesh](FRHICommandListImmediate& RHICmdList)
 			{
-				Draw_ThreadFunction(RHICmdList, OutRenderTarget, FeatureLevel,MehshSource);
+				Draw_ThreadFunction(RHICmdList, TextureRenderTargetResource, FeatureLevel, ToBakMesh);
 			}
 		);
-
-	//GEngine->AddOnScreenDebugMessage(0, 1, FColor::Cyan, FString::FromInt(n), true);
 }

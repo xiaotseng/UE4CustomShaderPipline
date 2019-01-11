@@ -239,14 +239,14 @@ static void DrawTestShaderRenderTarget_RenderThread(
 	//DrawPrimitiveUP(RHICmdList, PT_TriangleStrip, 2, Vertices, sizeof(Vertices[0]));  
 	DrawIndexedPrimitiveUP(
 		RHICmdList,
-		PT_TriangleList,
-		0,
-		ARRAY_COUNT(Vertices),
-		2,
-		Indices,
-		sizeof(Indices[0]),
-		Vertices,
-		sizeof(Vertices[0])
+		PT_TriangleList,//原始几何类型
+		0,//最小顶点序号
+		ARRAY_COUNT(Vertices),//顶点个数
+		2,//元素的数量
+		Indices,//序号地址
+		sizeof(Indices[0]),//序号占用空间大小
+		Vertices,//顶点地址
+		sizeof(Vertices[0])//顶点占用空间大小
 	);
 
 	// Resolve render target.  拷贝数据

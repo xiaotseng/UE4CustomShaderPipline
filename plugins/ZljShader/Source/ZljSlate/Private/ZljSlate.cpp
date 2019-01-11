@@ -12,19 +12,11 @@ AZljSlate::AZljSlate()
 	MyStruct.Actor = this;
 	MyStruct.Name = "dsds";
 	MyStruct.Number = 500;
-
-	
 	for (TFieldIterator<UProperty> PropIt(GetClass()); PropIt; ++PropIt)
 	{
 		UProperty* ppt = *PropIt;
 		Properties.Push(*PropIt);
 	}
-
-	
-
-	
-
-
 }
 
 

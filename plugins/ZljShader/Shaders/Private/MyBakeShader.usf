@@ -2,8 +2,10 @@
 struct a2f
 {//程序到顶点着色器
     float4 InPosition : ATRRIBUTE0;
-    float2 InUV0 : ATRRIBUTE1;
-    float2 InUV1 : ATRRIBUTE2;
+    float4 InColor : ATRRIBUTE1;
+    float4 InNormal : ATRRIBUTE2;
+    float2 InUV0 : ATRRIBUTE3;
+    float2 InUV1 : ATRRIBUTE4;
 };
 struct v2f
 {//顶点着色器到片断着色器

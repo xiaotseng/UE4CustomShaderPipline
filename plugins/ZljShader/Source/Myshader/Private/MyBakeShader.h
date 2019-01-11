@@ -1,7 +1,21 @@
 #pragma once
 #include "Public/GlobalShader.h"  
+#include "ObjectMacros.h"
+namespace ZLJ
+{//自己定义的顶点格式
+
+	struct MyVertex
+	{
+		FVector Position;
+		FColor VertexColor;
+		FVector Normal;
+		FVector2D Uv1;
+		FVector2D Uv2;
+	};
+}
+
 //顶点布局
-class FVertexLayoutBake:public FRenderResource
+class FVertexLayoutBake:public FRenderResource 
 {
 public:
 	FVertexDeclarationRHIRef VertexDeclarationRHI;

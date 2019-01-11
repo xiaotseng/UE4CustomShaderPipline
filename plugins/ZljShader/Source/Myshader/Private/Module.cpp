@@ -11,12 +11,13 @@ void FMyshaderModule::StartupModule()
 
 void FMyshaderModule::ShutdownModule()
 {
+	FModuleManager::Get().LoadModule("wdw");
 	// This function may be called during shutdown to clean up your module.  For modules that support dynamic reloading,
 	// we call this function before unloading the module.
 }
 
 #undef LOCTEXT_NAMESPACE
-	
-IMPLEMENT_MODULE(FMyshaderModule, Myshader)
+
+IMPLEMENT_MODULE(FMyshaderModule, Myshader)//注册Module到FModuleManager
 EXTERN_C DLLEXPORT  const char* myname="kele";
 DLLEXPORT  int add(int a, int b) { return a + b; };

@@ -31,12 +31,14 @@ IMPLEMENT_SHADER_TYPE(, FBakeShaderPS, TEXT("/Plugin/ZljShader/Private/MyBakeSha
 
 
 
-
 void FVertexLayoutBake::InitRHI()
 {
 	FVertexDeclarationElementList ElementList;
-	ElementList.Add(FVertexElement(0, 0, VET_Float4, 0, 24));
-	ElementList.Add(FVertexElement(0, 16, VET_Float2, 1, 24));
+	ElementList.Add(FVertexElement(0, STRUCT_OFFSET(ZLJ::MyVertex, Position), VET_Float3, 0, sizeof(ZLJ::MyVertex)));
+	ElementList.Add(FVertexElement(0, STRUCT_OFFSET(ZLJ::MyVertex, VertexColor), VET_Float3, 1, sizeof(ZLJ::MyVertex)));
+	ElementList.Add(FVertexElement(0, STRUCT_OFFSET(ZLJ::MyVertex, Normal), VET_Float3, 2, sizeof(ZLJ::MyVertex)));
+	ElementList.Add(FVertexElement(0, STRUCT_OFFSET(ZLJ::MyVertex, Uv1), VET_Float2, 3, sizeof(ZLJ::MyVertex)));
+	ElementList.Add(FVertexElement(0, STRUCT_OFFSET(ZLJ::MyVertex, Uv2), VET_Float2, 4, sizeof(ZLJ::MyVertex)));
 	VertexDeclarationRHI = RHICreateVertexDeclaration(ElementList);
 }
 
