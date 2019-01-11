@@ -4,7 +4,7 @@
 
 FBakeShader::FBakeShader(const ShaderMetaType::CompiledShaderInitializerType &Initializer) :FGlobalShader(Initializer)
 {
-
+	//Initializer.ParameterMap.
 }
 
 bool FBakeShader::ShouldCache(EShaderPlatform Platform)
