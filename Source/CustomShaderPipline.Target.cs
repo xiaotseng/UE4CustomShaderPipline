@@ -9,6 +9,6 @@ public class CustomShaderPiplineTarget : TargetRules
 	{
 		Type = TargetType.Game;
 
-		ExtraModuleNames.AddRange( new string[] { "CustomShaderPipline" } );
+		ExtraModuleNames.AddRange( new string[] { "CustomShaderPipline","CustomModule" } );
 	}
 }

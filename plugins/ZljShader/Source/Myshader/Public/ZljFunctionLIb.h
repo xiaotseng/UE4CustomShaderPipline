@@ -15,4 +15,5 @@ class MYSHADER_API UZljFunctionLIb : public UBlueprintFunctionLibrary
 public:
 		UFUNCTION(BlueprintCallable, Category = "BakeTexture", meta = (WorldContext = "WorldContextObject"))
 		static void bake(class UStaticMesh* ToBakMesh,class UTextureRenderTarget2D* OutRenderTarget,AActor* ac);
+		
 };

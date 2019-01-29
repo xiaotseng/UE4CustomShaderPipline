@@ -9,6 +9,6 @@ public class CustomShaderPiplineEditorTarget : TargetRules
 	{
 		Type = TargetType.Editor;
 
-		ExtraModuleNames.AddRange( new string[] { "CustomShaderPipline" } );
+		ExtraModuleNames.AddRange( new string[] { "CustomShaderPipline","CustomModule"} );
 	}
 }
